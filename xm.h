@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef struct XM_HEADER
+typedef struct __attribute__ ((__packed__)) XM_HEADER
 {
   uint8_t id[17];
   uint8_t module_name[20];
@@ -21,5 +21,19 @@ typedef struct XM_HEADER
   uint16_t bpm;
   uint8_t patter_order_table[256];
 } XM_header;
+
+typedef struct __attribute__ ((__packed__)) XM_PATTERN_HEADER
+{
+  uint32_t length;
+  uint8_t packing_type;
+  uint16_t n_rows;
+  uint8_t size;
+} XM_pattern_header;
+
+typedef struct XM_PATTERN
+{
+  XM_pattern_header header;
+  void *data;
+} XM_pattern;
 
 #endif // XM_H_
