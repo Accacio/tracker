@@ -3,9 +3,11 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_audio.h>
+
+#include "utils.h"
+
 #define PI 3.141592653589793f
 
-#define global static
 global int v=0;
 
 void
