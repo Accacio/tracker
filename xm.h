@@ -27,7 +27,7 @@ typedef struct __attribute__ ((__packed__)) XM_PATTERN_HEADER
   uint32_t length;
   uint8_t packing_type;
   uint16_t n_rows;
-  uint8_t size;
+  uint16_t size;
 } XM_pattern_header;
 
 typedef struct XM_PATTERN
