@@ -63,19 +63,19 @@ print_note (uint8_t note)
     }
   else
     {
-      if( note == 97 )
-      printf ("___");
+      if (note == 97)
+        printf ("███");
       else
-        printf("---");
+        printf ("---");
     }
 }
 
 void
-print_pattern(XM_pattern pattern, uint16_t n_channels)
+print_pattern (XM_pattern pattern, uint16_t n_channels)
 {
   for (int j = 0; j < pattern.header.n_rows; j++)
     {
-      printf("%02X |",j);
+      printf ("%02X |", j);
       for (int i = 0; i < n_channels; i++)
         {
           uint8_t *cur = pattern.data + i * 5 + j * 5 * n_channels;
@@ -85,6 +85,5 @@ print_pattern(XM_pattern pattern, uint16_t n_channels)
       printf ("\n");
     }
 }
-
 
 #endif // XM_H_
