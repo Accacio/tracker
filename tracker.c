@@ -55,39 +55,30 @@ main (int argc, char *argv[])
   printf ("size: %04x\n", pattern.header.size);
   pattern.data = malloc (pattern.header.n_rows * xm.n_channels * 5);
   memset (pattern.data, 0, pattern.header.n_rows * xm.n_channels * 5);
-
   for (int j = 0; j < pattern.header.n_rows; j++)
-    {
-
-      uint8_t slots[5];
-      for (int i = 0; i < xm.n_channels; i++)
-        {
-          uint8_t byte = *pointer;
-          pointer++;
-          /* printf ("%02x\n", byte); */
-          if (byte & 0x80)
-            {
-              slots[PATTERN_NOTE] = byte & 0X01 ? *pointer++ : 0;
-              slots[PATTERN_INSTRUMENT] = byte & 0X02 ? *pointer++ : 0;
-              slots[PATTERN_VOLUME] = byte & 0X04 ? *pointer++ : 0;
-              slots[PATTERN_EFFECT] = byte & 0X08 ? *pointer++ : 0;
-              slots[PATTERN_EFFECT_PARAM] = byte & 0X10 ? *pointer++ : 0;
-            }
-          else
-            {
-              slots[PATTERN_NOTE] = *pointer;
-              slots[PATTERN_INSTRUMENT] = 0;
-              slots[PATTERN_VOLUME] = 0;
-              slots[PATTERN_EFFECT] = 0;
-              slots[PATTERN_EFFECT_PARAM] = 0;
-              pointer++;
-            }
-          print_note (slots[PATTERN_NOTE]);
-          printf (" %02X %02X %02X %02X | ", slots[1], slots[2], slots[3],
-                  slots[4]);
-        }
-      printf ("\n");
-    }
+    for (int i = 0; i < xm.n_channels; i++)
+      {
+        uint8_t *cur = pattern.data + i * 5 + j * 5 * xm.n_channels;
+        uint8_t byte = *pointer;
+        pointer++;
+        if (byte & 0x80)
+          {
+            cur[PAT_NOTE] = byte & 0X01 ? *pointer++ : 0;
+            cur[PAT_INSTRUMENT] = byte & 0X02 ? *pointer++ : 0;
+            cur[PAT_VOLUME] = byte & 0X04 ? *pointer++ : 0;
+            cur[PAT_FX] = byte & 0X08 ? *pointer++ : 0;
+            cur[PAT_FX_PARAM] = byte & 0X10 ? *pointer++ : 0;
+          }
+        else
+          {
+            cur[PAT_NOTE] = byte;
+            cur[PAT_INSTRUMENT] = *pointer++;
+            cur[PAT_VOLUME] = *pointer++;
+            cur[PAT_FX] = *pointer++;
+            cur[PAT_FX_PARAM] = *pointer++;
+          }
+      }
+  print_pattern (pattern, xm.n_channels);
 
   /* PatternNote ranges in 1..96 */
   /*   1   = C-0 */
