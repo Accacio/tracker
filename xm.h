@@ -26,21 +26,22 @@ typedef struct __attribute__ ((__packed__)) XM_HEADER
 } XM_header;
 
 void
-print_XM_header (XM_header xm_header)
+print_XM_header (XM_header header)
 {
-  printf ("id: %.17s\n", xm_header.id); // %Extended Module: %
-  printf ("name: %.20s\n", xm_header.module_name);
-  printf ("tracker: %.20s\n", xm_header.tracker_name);
-  printf ("version: %04x\n", xm_header.version);       // current is 104
-  printf ("header size: %d\n", xm_header.header_size); //
-  printf ("length: %02x\n", xm_header.song_length);    //
-  printf ("restart position: %02x\n", xm_header.song_restart_position); //
-  printf ("channels: %02x\n", xm_header.n_channels);                    //
-  printf ("patterns: %02x\n", xm_header.n_patterns);                    //
-  printf ("instruments: %02x\n", xm_header.n_instruments);              //
-  printf ("flags: %02x\n", xm_header.flags);                            //
-  printf ("tempo: %d\n", xm_header.default_tempo);                      //
-  printf ("bpm: %d\n", xm_header.bpm);                                  //
+  printf ("id: %.17s\n", header.id); // %Extended Module: %
+  printf ("name: %.20s\n", header.module_name);
+  printf ("tracker: %.20s\n", header.tracker_name);
+  printf ("version: %04x\n", header.version);       // current is 104
+  printf ("header size: %d\n", header.header_size); //
+  printf ("length: %02x\n", header.song_length);    //
+  printf ("restart position: %02x\n",
+          header.song_restart_position);                //
+  printf ("channels: %02x\n", header.n_channels);       //
+  printf ("patterns: %02x\n", header.n_patterns);       //
+  printf ("instruments: %02x\n", header.n_instruments); //
+  printf ("flags: %02x\n", header.flags);               //
+  printf ("tempo: %d\n", header.default_tempo);         //
+  printf ("bpm: %d\n", header.bpm);                     //
 }
 
 typedef struct __attribute__ ((__packed__)) XM_PATTERN_HEADER
