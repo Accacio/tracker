@@ -60,11 +60,13 @@ typedef struct XM_PATTERN_NOTE
   uint8_t effect_parameter;
 } XM_pattern_note;
 
+// NOTE(accacio): Maybe it is better to structure as double array, in
+// case we need to add/remove channels and rows
 typedef struct XM_PATTERN
 {
   XM_pattern_header header;
   uint16_t n_channels;
-  void *data;
+  XM_pattern_note **data;
 } XM_pattern;
 
 enum
@@ -119,7 +121,7 @@ print_pattern_data (XM_pattern pattern)
       printf ("%02X |", j);
       for (int i = 0; i < pattern.n_channels; i++)
         {
-          uint8_t *cur = pattern.data + i * 5 + j * 5 * pattern.n_channels;
+          uint8_t *cur = (uint8_t *) &pattern.data[i][j];
           print_note (cur[PAT_NOTE]);
           printf (" %02X %02X %02X %02X | ", cur[1], cur[2], cur[3], cur[4]);
         }

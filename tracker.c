@@ -46,15 +46,21 @@ main (int argc, char *argv[])
       pointer += sizeof (XM_pattern_header);
 
       uint64_t pattern_size = pattern.header.n_rows * pattern.n_channels;
-      pattern.data = malloc (pattern_size * sizeof (XM_pattern_note));
-      memset (pattern.data, 0, pattern_size * sizeof (XM_pattern_note));
+      pattern.data = (XM_pattern_note **) malloc (
+          pattern.n_channels * sizeof (XM_pattern_note *));
+      for (int i = 0; i < pattern.n_channels; i++)
+        {
+          pattern.data[i] = (XM_pattern_note *) malloc (
+              pattern.header.n_rows * sizeof (XM_pattern_note));
+          memset (pattern.data[i], 0,
+                  pattern.header.n_rows * sizeof (XM_pattern_note));
+        }
 
       for (int j = 0; j < pattern.header.n_rows; j++)
         for (int i = 0; i < pattern.n_channels; i++)
           {
-            XM_pattern_note *cur_note
-                = (XM_pattern_note*) pattern.data + i * sizeof (XM_pattern_note)
-                  + j * sizeof (XM_pattern_note) * pattern.n_channels;
+            XM_pattern_note *cur_note = &pattern.data[i][j];
+
             uint8_t byte = *pointer;
             pointer++;
             if (byte & 0x80)
