@@ -90,6 +90,18 @@ main (int argc, char *argv[])
       /* printf ("\n"); */
     }
 
+  XM_instrument_header instrument_header = *(XM_instrument_header *) pointer;
+  pointer += sizeof (XM_instrument_header);
+  print_instrument_header(instrument_header);
+
+  XM_extended_instrument_header extended_instrument_header = *(XM_extended_instrument_header *) pointer;
+  pointer += sizeof (XM_extended_instrument_header);
+  printf("header size: %02X\n", extended_instrument_header.length);
+
+  printf("sample per note:\n\t");
+  /* TODO(accacio): print in keyboard style */
+  print_extendend_instrument_header(extended_instrument_header);
+  printf ("%02X\n", (uint16_t) (pointer - xm_contents));
 
   SDL_InitSubSystem (SDL_INIT_AUDIO);
   SDL_AudioSpec wanted, obtained;

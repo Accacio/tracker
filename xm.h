@@ -121,4 +121,88 @@ print_pattern_data (XM_pattern pattern)
     }
 }
 
+typedef struct __attribute__ ((__packed__)) XM_INSTRUMENT_HEADER
+{
+  uint32_t length;
+  uint8_t name[22];
+  uint8_t type;
+  uint16_t n_samples;
+} XM_instrument_header;
+
+void
+print_instrument_header (XM_instrument_header header)
+{
+  printf ("header size: %02X\n", header.length);
+  printf ("name: %.20s\n", header.name);
+  printf ("samples: %02X\n", header.n_samples);
+}
+
+typedef struct __attribute__ ((__packed__)) XM_ENVELOP_POINT
+{
+  uint16_t frame;
+  uint16_t value; // between 0 and 64
+} XM_envelope_point;
+
+typedef struct __attribute__ ((__packed__)) XM_EXTENDED_INSTRUMENT_HEADER
+{
+  uint32_t length;
+  uint8_t sample_per_note[96];
+  XM_envelope_point volume_envelope_points[12];
+  XM_envelope_point panning_envelope_points[12];
+  uint8_t n_volume_envelope_points;
+  uint8_t n_panning_envelope_points;
+  uint8_t volume_sustain_point;
+  uint8_t volume_loop_start;
+  uint8_t volume_loop_end;
+  uint8_t panning_sustain_point;
+  uint8_t panning_loop_start;
+  uint8_t panning_loop_end;
+  uint8_t volume_type;
+  uint8_t panning_type;
+  uint8_t vibrato_type;
+  uint8_t vibrato_sweep;
+  uint8_t vibrato_depth;
+  uint8_t vibrato_rate;
+  uint16_t volume_fadeout;
+  uint16_t not_used;
+} XM_extended_instrument_header;
+
+void
+print_extendend_instrument_header (XM_extended_instrument_header header)
+{
+  for (int i = 0; i < 96; i++)
+    {
+      printf ("%d ", header.sample_per_note[i]);
+    }
+  printf ("\n");
+
+  printf ("volume envelope: \n\t");
+  for (int i = 0; i < header.n_volume_envelope_points; i++)
+    {
+      XM_envelope_point point = header.volume_envelope_points[i];
+      printf ("(%03d,%03d) ", point.frame, point.value);
+    }
+  printf ("\n");
+
+  printf ("panning envelope: \n\t");
+  for (int i = 0; i < header.n_panning_envelope_points; i++)
+    {
+      XM_envelope_point point = header.panning_envelope_points[i];
+      printf ("(%03d,%03d) ", point.frame, point.value);
+    }
+  printf ("\n");
+  printf ("volume sustain point: %d\n", header.volume_sustain_point);
+  printf ("volume loop start: %d\n", header.volume_loop_start);
+  printf ("volume loop end: %d\n", header.volume_loop_end);
+  printf ("panning sustain point: %d\n", header.panning_sustain_point);
+  printf ("panning loop start: %d\n", header.panning_loop_start);
+  printf ("panning loop end: %d\n", header.panning_loop_end);
+  printf ("volume type: %d\n", header.volume_type);
+  printf ("panning type: %d\n", header.panning_type);
+  printf ("vibrato type: %d\n", header.vibrato_type);
+  printf ("vibrato sweep: %02X\n", header.vibrato_sweep);
+  printf ("vibrato depth: %02X\n", header.vibrato_depth);
+  printf ("vibrato rate: %02X\n", header.vibrato_rate);
+  printf ("volume fadeout: %02X\n", header.volume_fadeout);
+}
 #endif // XM_H_
