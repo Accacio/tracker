@@ -53,7 +53,8 @@ main (int argc, char *argv[])
         for (int i = 0; i < pattern.n_channels; i++)
           {
             XM_pattern_note *cur_note
-                = pattern.data + i * sizeof(XM_pattern_note) + j * sizeof(XM_pattern_note) * pattern.n_channels;
+                = (XM_pattern_note*) pattern.data + i * sizeof (XM_pattern_note)
+                  + j * sizeof (XM_pattern_note) * pattern.n_channels;
             uint8_t byte = *pointer;
             pointer++;
             if (byte & 0x80)
