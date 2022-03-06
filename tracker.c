@@ -38,28 +38,32 @@ main (int argc, char *argv[])
       /* printf ("%02x ", xm_header.patter_order_table[i]); // */
     }
   printf ("\n");
+  XM_pattern *patterns = malloc (xm_header.n_patterns * sizeof (XM_pattern));
+  memset (patterns, 0, xm_header.n_patterns * sizeof (XM_pattern));
+
   for (int pattern_idx = 0; pattern_idx < xm_header.n_patterns; pattern_idx++)
     {
-      XM_pattern pattern = {};
-      pattern.header = *(XM_pattern_header *) pointer;
-      pattern.n_channels = xm_header.n_channels;
+
+      XM_pattern *pattern = &patterns[pattern_idx];
+      pattern->header = *(XM_pattern_header *) pointer;
+      pattern->n_channels = xm_header.n_channels;
       pointer += sizeof (XM_pattern_header);
 
-      uint64_t pattern_size = pattern.header.n_rows * pattern.n_channels;
-      pattern.data = (XM_pattern_note **) malloc (
-          pattern.n_channels * sizeof (XM_pattern_note *));
-      for (int i = 0; i < pattern.n_channels; i++)
+      uint64_t pattern_size = pattern->header.n_rows * pattern->n_channels;
+      pattern->data = (XM_pattern_note **) malloc (
+          pattern->n_channels * sizeof (XM_pattern_note *));
+      for (int i = 0; i < pattern->n_channels; i++)
         {
-          pattern.data[i] = (XM_pattern_note *) malloc (
-              pattern.header.n_rows * sizeof (XM_pattern_note));
-          memset (pattern.data[i], 0,
-                  pattern.header.n_rows * sizeof (XM_pattern_note));
+          pattern->data[i] = (XM_pattern_note *) malloc (
+              pattern->header.n_rows * sizeof (XM_pattern_note));
+          memset (pattern->data[i], 0,
+                  pattern->header.n_rows * sizeof (XM_pattern_note));
         }
 
-      for (int j = 0; j < pattern.header.n_rows; j++)
-        for (int i = 0; i < pattern.n_channels; i++)
+      for (int j = 0; j < pattern->header.n_rows; j++)
+        for (int i = 0; i < pattern->n_channels; i++)
           {
-            XM_pattern_note *cur_note = &pattern.data[i][j];
+            XM_pattern_note *cur_note = &pattern->data[i][j];
 
             uint8_t byte = *pointer;
             pointer++;
