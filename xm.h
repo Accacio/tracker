@@ -69,15 +69,6 @@ typedef struct XM_PATTERN
   XM_pattern_note **data;
 } XM_pattern;
 
-enum
-{
-  PAT_NOTE,
-  PAT_INSTRUMENT,
-  PAT_VOLUME,
-  PAT_FX,
-  PAT_FX_PARAM,
-};
-
 global const char note_name[12][3] = { "C-", "C#", "D-", "D#", "E-", "F-",
                                        "F#", "G-", "G#", "A-", "A#", "B-" };
 
@@ -122,7 +113,7 @@ print_pattern_data (XM_pattern pattern)
       for (int i = 0; i < pattern.n_channels; i++)
         {
           uint8_t *cur = (uint8_t *) &pattern.data[i][j];
-          print_note (cur[PAT_NOTE]);
+          print_note (cur[0]);
           printf (" %02X %02X %02X %02X | ", cur[1], cur[2], cur[3], cur[4]);
         }
       printf ("\n");
