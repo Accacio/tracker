@@ -50,27 +50,27 @@ main (int argc, char *argv[])
       memset (pattern.data, 0, pattern_size * sizeof (XM_pattern_note));
 
       for (int j = 0; j < pattern.header.n_rows; j++)
-        for (int i = 0; i < xm_header.n_channels; i++)
+        for (int i = 0; i < pattern.n_channels; i++)
           {
-            XM_pattern_note *cur
-                = pattern.data + i * 5 + j * 5 * xm_header.n_channels;
+            XM_pattern_note *cur_note
+                = pattern.data + i * sizeof(XM_pattern_note) + j * sizeof(XM_pattern_note) * pattern.n_channels;
             uint8_t byte = *pointer;
             pointer++;
             if (byte & 0x80)
               {
-                cur->note = byte & 0X01 ? *pointer++ : 0;
-                cur->instrument = byte & 0X02 ? *pointer++ : 0;
-                cur->volume = byte & 0X04 ? *pointer++ : 0;
-                cur->effect = byte & 0X08 ? *pointer++ : 0;
-                cur->effect_parameter = byte & 0X10 ? *pointer++ : 0;
+                cur_note->note = byte & 0X01 ? *pointer++ : 0;
+                cur_note->instrument = byte & 0X02 ? *pointer++ : 0;
+                cur_note->volume = byte & 0X04 ? *pointer++ : 0;
+                cur_note->effect = byte & 0X08 ? *pointer++ : 0;
+                cur_note->effect_parameter = byte & 0X10 ? *pointer++ : 0;
               }
             else
               {
-                cur->note = byte;
-                cur->instrument = *pointer++;
-                cur->volume = *pointer++;
-                cur->effect = *pointer++;
-                cur->effect_parameter = *pointer++;
+                cur_note->note = byte;
+                cur_note->instrument = *pointer++;
+                cur_note->volume = *pointer++;
+                cur_note->effect = *pointer++;
+                cur_note->effect_parameter = *pointer++;
               }
           }
       /* print_pattern_header (pattern); */
