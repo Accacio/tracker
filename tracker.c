@@ -7,6 +7,11 @@
 int
 main (int argc, char *argv[])
 {
+  if (argc < 2)
+    {
+      printf ("No input file given\n");
+      return (1);
+    }
   const char *filename = argv[1];
   FILE *xm_file = fopen (filename, "rb");
   if (!xm_file)
@@ -16,74 +21,64 @@ main (int argc, char *argv[])
   fseek (xm_file, 0, SEEK_END);
 
   int size_bytes = ftell (xm_file);
-  rewind (xm_file);
-  void *xm_contents = malloc (size_bytes);
-  fread (xm_contents, 1, size_bytes, xm_file);
-  uint8_t *pointer = (uint8_t *) (xm_contents);
+  /* printf ("file size: %dB\n", size_bytes); */
 
-  XM_header xm = *(XM_header *) pointer;
+  rewind (xm_file);
+  uint8_t *xm_contents = (uint8_t *) malloc (size_bytes);
+  fread (xm_contents, 1, size_bytes, xm_file);
+  uint8_t *pointer = xm_contents;
+
+  XM_header xm_header = *(XM_header *) pointer;
   pointer += sizeof (XM_header);
-  printf ("file size: %dB\n", size_bytes);
-  printf ("id: %.17s\n", xm.id); // %Extended Module: %
-  printf ("name: %.20s\n", xm.module_name);
-  /* printf("%02x\n",xm.not_used1); // 1a */
-  printf ("tracker: %.20s\n", xm.tracker_name);
-  printf ("version: %04x\n", xm.version);       // current is 104
-  printf ("header size: %d\n", xm.header_size); //
-  printf ("length: %02x\n", xm.song_length);    //
-  printf ("restart position: %02x\n", xm.song_restart_position); //
-  printf ("channels: %02x\n", xm.n_channels);                    //
-  printf ("patterns: %02x\n", xm.n_patterns);                    //
-  printf ("instruments: %02x\n", xm.n_instruments);              //
-  printf ("flags: %02x\n", xm.flags);                            //
-  printf ("tempo: %d\n", xm.default_tempo);                      //
-  printf ("bpm: %d\n", xm.bpm);                                  //
-  for (int i = 0; i < xm.song_length; i++)
+  print_XM_header (xm_header);
+
+  for (int i = 0; i < xm_header.song_length; i++)
     {
-      /* printf ("%02x %02x\n", i, xm.patter_order_table[i]); // */
-      printf ("%02x ", xm.patter_order_table[i]); //
+      printf ("%02x %02x\n", i, xm_header.patter_order_table[i]); //
+      /* printf ("%02x ", xm_header.patter_order_table[i]); // */
+    }
+  printf ("\n");
+  for (int pattern_idx = 0; pattern_idx < xm_header.n_patterns; pattern_idx++)
+    {
+      XM_pattern pattern = {};
+      pattern.header = *(XM_pattern_header *) pointer;
+      pattern.n_channels = xm_header.n_channels;
+      pointer += sizeof (XM_pattern_header);
+
+      uint64_t pattern_size = pattern.header.n_rows * pattern.n_channels;
+      pattern.data = malloc (pattern_size * sizeof (XM_pattern_note));
+      memset (pattern.data, 0, pattern_size * sizeof (XM_pattern_note));
+
+      for (int j = 0; j < pattern.header.n_rows; j++)
+        for (int i = 0; i < xm_header.n_channels; i++)
+          {
+            XM_pattern_note *cur
+                = pattern.data + i * 5 + j * 5 * xm_header.n_channels;
+            uint8_t byte = *pointer;
+            pointer++;
+            if (byte & 0x80)
+              {
+                cur->note = byte & 0X01 ? *pointer++ : 0;
+                cur->instrument = byte & 0X02 ? *pointer++ : 0;
+                cur->volume = byte & 0X04 ? *pointer++ : 0;
+                cur->effect = byte & 0X08 ? *pointer++ : 0;
+                cur->effect_parameter = byte & 0X10 ? *pointer++ : 0;
+              }
+            else
+              {
+                cur->note = byte;
+                cur->instrument = *pointer++;
+                cur->volume = *pointer++;
+                cur->effect = *pointer++;
+                cur->effect_parameter = *pointer++;
+              }
+          }
+      /* print_pattern_header (pattern); */
+      /* printf ("Pattern %02X\n", pattern_idx); */
+      /* print_pattern_data (pattern); */
+      /* printf ("\n"); */
     }
 
-  XM_pattern pattern = {};
-  pattern.header = *(XM_pattern_header *) pointer;
-  pointer += sizeof (XM_pattern_header);
-
-  printf ("\n");
-  printf ("length: %02x\n", pattern.header.length);
-  printf ("packing type: %02x\n", pattern.header.packing_type);
-  printf ("rows: %04x\n", pattern.header.n_rows);
-  printf ("size: %04x\n", pattern.header.size);
-  pattern.data = malloc (pattern.header.n_rows * xm.n_channels * 5);
-  memset (pattern.data, 0, pattern.header.n_rows * xm.n_channels * 5);
-  for (int j = 0; j < pattern.header.n_rows; j++)
-    for (int i = 0; i < xm.n_channels; i++)
-      {
-        uint8_t *cur = pattern.data + i * 5 + j * 5 * xm.n_channels;
-        uint8_t byte = *pointer;
-        pointer++;
-        if (byte & 0x80)
-          {
-            cur[PAT_NOTE] = byte & 0X01 ? *pointer++ : 0;
-            cur[PAT_INSTRUMENT] = byte & 0X02 ? *pointer++ : 0;
-            cur[PAT_VOLUME] = byte & 0X04 ? *pointer++ : 0;
-            cur[PAT_FX] = byte & 0X08 ? *pointer++ : 0;
-            cur[PAT_FX_PARAM] = byte & 0X10 ? *pointer++ : 0;
-          }
-        else
-          {
-            cur[PAT_NOTE] = byte;
-            cur[PAT_INSTRUMENT] = *pointer++;
-            cur[PAT_VOLUME] = *pointer++;
-            cur[PAT_FX] = *pointer++;
-            cur[PAT_FX_PARAM] = *pointer++;
-          }
-      }
-  print_pattern (pattern, xm.n_channels);
-
-  /* PatternNote ranges in 1..96 */
-  /*   1   = C-0 */
-  /*   96  = B-7 */
-  /*   97  = Key Off (special 'note') */
 
   SDL_InitSubSystem (SDL_INIT_AUDIO);
   SDL_AudioSpec wanted, obtained;
