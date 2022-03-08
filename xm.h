@@ -70,8 +70,6 @@ typedef struct XM_PATTERN
   XM_pattern_note **data;
 } XM_pattern;
 
-global const char note_name[12][3] = { "C-", "C#", "D-", "D#", "E-", "F-",
-                                       "F#", "G-", "G#", "A-", "A#", "B-" };
 
 /* PatternNote ranges in 1..96 */
 /*   1   = C-0 */
@@ -170,11 +168,26 @@ typedef struct __attribute__ ((__packed__)) XM_EXTENDED_INSTRUMENT_HEADER
 void
 print_extendend_instrument_header (XM_extended_instrument_header header)
 {
-  for (int i = 0; i < 96; i++)
-    {
-      printf ("%d ", header.sample_per_note[i]);
+  printf("header size: %02X\n", header.length);
+
+  printf("sample per note:\n");
+  for (int i = 0; i < 96/12; i++) {
+      printf(" \e[1;37;40m%02X\e[0m", header.sample_per_note[12*i+1]);
+      printf(" \e[1;37;40m%02X\e[0m", header.sample_per_note[12*i+3]);
+      printf("   ");
+      printf(" \e[1;37;40m%02X\e[0m", header.sample_per_note[12*i+6]);
+      printf(" \e[1;37;40m%02X\e[0m", header.sample_per_note[12*i+8]);
+      printf(" \e[1;37;40m%02X\e[0m", header.sample_per_note[12*i+10]);
+      printf("   ");
+  }
+  printf("\n");
+  for (int i = 0; i < 96/12; i++) {
+    for (int j = 0; j < 12; j++) {
+      if(!(j==1|j==3|j==6|j==8|j==10))
+      printf("\e[22;30;47m%02X\e[0m ", header.sample_per_note[12*i+j]);
     }
-  printf ("\n");
+  }
+  printf("\n");
 
   printf ("volume envelope: \n\t");
   for (int i = 0; i < header.n_volume_envelope_points; i++)
