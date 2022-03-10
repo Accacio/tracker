@@ -162,7 +162,7 @@ typedef struct __attribute__ ((__packed__)) XM_EXTENDED_INSTRUMENT_HEADER
   uint8_t vibrato_depth;
   uint8_t vibrato_rate;
   uint16_t volume_fadeout;
-  uint8_t not_used[22];
+  uint16_t not_used[11];
 } XM_extended_instrument_header;
 
 void
