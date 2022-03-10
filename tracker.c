@@ -99,6 +99,7 @@ main (int argc, char *argv[])
   pointer += sizeof (XM_extended_instrument_header);
   print_extendend_instrument_header (extended_instrument_header);
 
+  /* TODO(accacio): Test if samples==0 */
   XM_sample *sample
       = malloc (instrument_header.n_samples * sizeof (XM_sample));
 
