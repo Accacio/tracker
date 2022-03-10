@@ -168,7 +168,7 @@ typedef struct __attribute__ ((__packed__)) XM_EXTENDED_INSTRUMENT_HEADER
 void
 print_extendend_instrument_header (XM_extended_instrument_header header)
 {
-  printf("header size: %02X\n", header.length);
+  printf ("header size: %02X\n", header.size);
 
   printf("sample per note:\n");
   for (int i = 0; i < 96/12; i++) {
