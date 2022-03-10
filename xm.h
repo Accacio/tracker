@@ -218,4 +218,39 @@ print_extendend_instrument_header (XM_extended_instrument_header header)
   printf ("vibrato rate: %02X\n", header.vibrato_rate);
   printf ("volume fadeout: %02X\n", header.volume_fadeout);
 }
+
+typedef struct __attribute__ ((__packed__)) XM_SAMPLE_HEADER
+{
+  uint32_t length;
+  uint32_t loop_start;
+  uint32_t loop_length;
+  uint8_t volume;
+  uint8_t fine_tune;
+  uint8_t type;
+  uint8_t panning;
+  uint8_t relative_note;
+  uint8_t not_used;
+  uint8_t name[22];
+} XM_sample_header;
+
+typedef struct XM_SAMPLE
+{
+  XM_sample_header header;
+  uint32_t n_samples;
+  int32_t *data;
+} XM_sample;
+
+void
+print_sample_header (XM_sample_header header)
+{
+  printf ("length: %04X\n", header.length);
+  printf ("loop start: %04X\n", header.loop_start);
+  printf ("loop length: %04X\n", header.loop_length);
+  printf ("volume: %d\n", header.volume);
+  printf ("fine tune: %d\n", header.fine_tune);
+  printf ("type: %02X\n", header.type);
+  printf ("panning: %02X\n", header.panning);
+  printf ("name: %.22s\n", header.name);
+}
+
 #endif // XM_H_

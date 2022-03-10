@@ -84,24 +84,62 @@ main (int argc, char *argv[])
                 cur_note->effect_parameter = *pointer++;
               }
           }
-      /* print_pattern_header (pattern); */
       /* printf ("Pattern %02X\n", pattern_idx); */
-      /* print_pattern_data (pattern); */
+      /* print_pattern_header (*pattern); */
+      /* print_pattern_data (*pattern); */
       /* printf ("\n"); */
     }
 
   XM_instrument_header instrument_header = *(XM_instrument_header *) pointer;
   pointer += sizeof (XM_instrument_header);
-  print_instrument_header(instrument_header);
+  print_instrument_header (instrument_header);
 
-  XM_extended_instrument_header extended_instrument_header = *(XM_extended_instrument_header *) pointer;
+  XM_extended_instrument_header extended_instrument_header
+      = *(XM_extended_instrument_header *) pointer;
   pointer += sizeof (XM_extended_instrument_header);
-  printf("header size: %02X\n", extended_instrument_header.length);
+  print_extendend_instrument_header (extended_instrument_header);
 
-  printf("sample per note:\n\t");
-  /* TODO(accacio): print in keyboard style */
-  print_extendend_instrument_header(extended_instrument_header);
+  XM_sample_header sample_header = *(XM_sample_header *) pointer;
+  pointer += sizeof (XM_sample_header);
+  print_sample_header (sample_header);
+
+  XM_sample_header sample_header_2 = *(XM_sample_header *) pointer;
+  pointer += sizeof (XM_sample_header);
+  print_sample_header (sample_header_2);
+
+  XM_sample sample = { 0 };
+
+  if ((sample_header.type & 0X10)) /* if 16bit */
+    {
+      sample.n_samples = sample_header.length / 2;
+      sample.data = (int32_t *) malloc (sample.n_samples * sizeof (int32_t));
+      memset (sample.data, 0, sample.n_samples * sizeof (int32_t));
+
+      int16_t old = 0;
+      for (int i = 0; i < sample.n_samples; i++)
+        {
+          old += *((int16_t *) pointer);
+          sample.data[i] = old;
+          pointer += 2;
+        }
+    }
   printf ("%02X\n", (uint16_t) (pointer - xm_contents));
+
+  XM_sample sample2 = { 0 };
+  if (!(sample_header_2.type & 0X10)) /* if 8bit */
+    {
+      sample.n_samples = sample_header_2.length ;
+      sample.data = (int32_t *) malloc (sample.n_samples * sizeof (int32_t));
+      memset (sample.data, 0, sample.n_samples * sizeof (int32_t));
+
+      int8_t old = 0;
+      for (int i = 0; i < sample.n_samples; i++)
+        {
+          old += *((int8_t *) pointer);
+          sample.data[i] = old;
+          pointer += 1;
+        }
+    }
 
   SDL_InitSubSystem (SDL_INIT_AUDIO);
   SDL_AudioSpec wanted, obtained;
