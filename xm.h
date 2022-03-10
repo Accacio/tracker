@@ -46,10 +46,10 @@ print_XM_header (XM_header header)
 
 typedef struct __attribute__ ((__packed__)) XM_PATTERN_HEADER
 {
-  uint32_t length;
+  uint32_t size;
   uint8_t packing_type;
   uint16_t n_rows;
-  uint16_t size;
+  uint16_t length;
 } XM_pattern_header;
 
 typedef struct XM_PATTERN_NOTE
@@ -98,10 +98,10 @@ print_note (uint8_t note)
 void
 print_pattern_header (XM_pattern pattern)
 {
-  printf ("length: %02x\n", pattern.header.length);
+  printf ("size: %02x\n", pattern.header.size);
   printf ("packing type: %02x\n", pattern.header.packing_type);
   printf ("rows: %04x\n", pattern.header.n_rows);
-  printf ("size: %04x\n", pattern.header.size);
+  printf ("length: %04x\n", pattern.header.length);
 }
 void
 print_pattern_data (XM_pattern pattern)
@@ -121,7 +121,7 @@ print_pattern_data (XM_pattern pattern)
 
 typedef struct __attribute__ ((__packed__)) XM_INSTRUMENT_HEADER
 {
-  uint32_t length;
+  uint32_t size;
   uint8_t name[22];
   uint8_t type;
   uint16_t n_samples;
@@ -130,7 +130,7 @@ typedef struct __attribute__ ((__packed__)) XM_INSTRUMENT_HEADER
 void
 print_instrument_header (XM_instrument_header header)
 {
-  printf ("header size: %02X\n", header.length);
+  printf ("header size: %02X\n", header.size);
   printf ("name: %.22s\n", header.name);
   printf ("samples: %02X\n", header.n_samples);
 }
@@ -143,7 +143,7 @@ typedef struct __attribute__ ((__packed__)) XM_ENVELOP_POINT
 
 typedef struct __attribute__ ((__packed__)) XM_EXTENDED_INSTRUMENT_HEADER
 {
-  uint32_t length;
+  uint32_t size;
   uint8_t sample_per_note[96];
   XM_envelope_point volume_envelope_points[12];
   XM_envelope_point panning_envelope_points[12];
