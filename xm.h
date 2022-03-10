@@ -131,7 +131,7 @@ void
 print_instrument_header (XM_instrument_header header)
 {
   printf ("header size: %02X\n", header.length);
-  printf ("name: %.20s\n", header.name);
+  printf ("name: %.22s\n", header.name);
   printf ("samples: %02X\n", header.n_samples);
 }
 
