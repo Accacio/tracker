@@ -99,50 +99,52 @@ main (int argc, char *argv[])
   pointer += sizeof (XM_extended_instrument_header);
   print_extendend_instrument_header (extended_instrument_header);
 
-  /* TODO(accacio): Test if samples==0 */
-  XM_sample *sample
-      = malloc (instrument_header.n_samples * sizeof (XM_sample));
-
-  for (int i = 0; i < instrument_header.n_samples; i++)
+  if (instrument_header.n_samples)
     {
-      sample[i].header = *(XM_sample_header *) pointer;
-      pointer += sizeof (XM_sample_header);
-      print_sample_header (sample[i].header);
-    }
+      XM_sample *sample
+          = malloc (instrument_header.n_samples * sizeof (XM_sample));
 
-  for (int i = 0; i < instrument_header.n_samples; i++)
-    {
-      XM_sample *cur_sample = &sample[i];
-      if ((cur_sample->header.type & 0X10)) /* if 16bit */
+      for (int i = 0; i < instrument_header.n_samples; i++)
         {
-          cur_sample->n_samples = cur_sample->header.length / 2;
-          cur_sample->data
-              = (int32_t *) malloc (cur_sample->n_samples * sizeof (int32_t));
-          memset (cur_sample->data, 0,
-                  cur_sample->n_samples * sizeof (int32_t));
-
-          int16_t old = 0;
-          for (int i = 0; i < cur_sample->n_samples; i++)
-            {
-              old += *((int16_t *) pointer);
-              cur_sample->data[i] = old;
-              pointer += 2;
-            }
+          sample[i].header = *(XM_sample_header *) pointer;
+          pointer += sizeof (XM_sample_header);
+          print_sample_header (sample[i].header);
         }
-      else
-        {
-          cur_sample->n_samples = cur_sample->header.length;
-          cur_sample->data
-              = (int32_t *) malloc (cur_sample->n_samples * sizeof (int32_t));
-          memset (cur_sample->data, 0,
-                  cur_sample->n_samples * sizeof (int32_t));
 
-          int8_t old = 0;
-          for (int i = 0; i < cur_sample->n_samples; i++)
+      for (int i = 0; i < instrument_header.n_samples; i++)
+        {
+          XM_sample *cur_sample = &sample[i];
+          if ((cur_sample->header.type & 0X10)) /* if 16bit */
             {
-              old += *((int8_t *) pointer);
-              cur_sample->data[i] = old;
-              pointer += 1;
+              cur_sample->n_samples = cur_sample->header.length / 2;
+              cur_sample->data = (int32_t *) malloc (cur_sample->n_samples
+                                                     * sizeof (int32_t));
+              memset (cur_sample->data, 0,
+                      cur_sample->n_samples * sizeof (int32_t));
+
+              int16_t old = 0;
+              for (int i = 0; i < cur_sample->n_samples; i++)
+                {
+                  old += *((int16_t *) pointer);
+                  cur_sample->data[i] = old;
+                  pointer += 2;
+                }
+            }
+          else
+            {
+              cur_sample->n_samples = cur_sample->header.length;
+              cur_sample->data = (int32_t *) malloc (cur_sample->n_samples
+                                                     * sizeof (int32_t));
+              memset (cur_sample->data, 0,
+                      cur_sample->n_samples * sizeof (int32_t));
+
+              int8_t old = 0;
+              for (int i = 0; i < cur_sample->n_samples; i++)
+                {
+                  old += *((int8_t *) pointer);
+                  cur_sample->data[i] = old;
+                  pointer += 1;
+                }
             }
         }
     }
