@@ -94,13 +94,13 @@ main (int argc, char *argv[])
   pointer += sizeof (XM_instrument_header);
   print_instrument_header (instrument_header);
 
-  XM_extended_instrument_header extended_instrument_header
-      = *(XM_extended_instrument_header *) pointer;
-  pointer += sizeof (XM_extended_instrument_header);
-  print_extendend_instrument_header (extended_instrument_header);
-
   if (instrument_header.n_samples)
     {
+      XM_extended_instrument_header extended_instrument_header
+          = *(XM_extended_instrument_header *) pointer;
+      pointer += sizeof (XM_extended_instrument_header);
+      print_extendend_instrument_header (extended_instrument_header);
+
       XM_sample *sample
           = malloc (instrument_header.n_samples * sizeof (XM_sample));
 
