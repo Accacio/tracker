@@ -6,7 +6,7 @@
 
 #include "utils.h"
 
-typedef struct __attribute__ ((__packed__)) XM_HEADER
+typedef struct __attribute__ ((__packed__)) XM_SONG_HEADER
 {
   uint8_t id[17];
   uint8_t module_name[20];
@@ -23,10 +23,10 @@ typedef struct __attribute__ ((__packed__)) XM_HEADER
   uint16_t default_tempo;
   uint16_t bpm;
   uint8_t patter_order_table[256];
-} XM_header;
+} XM_song_header;
 
 void
-print_XM_header (XM_header header)
+print_song_header (XM_song_header header)
 {
   printf ("id: %.17s\n", header.id); // %Extended Module: %
   printf ("name: %.20s\n", header.module_name);
@@ -42,6 +42,12 @@ print_XM_header (XM_header header)
   printf ("flags: %02x\n", header.flags);               //
   printf ("tempo: %d\n", header.default_tempo);         //
   printf ("bpm: %d\n", header.bpm);                     //
+  for (int i = 0; i < header.song_length; i++)
+    {
+      printf ("%02x %02x\n", i, header.patter_order_table[i]); //
+      /* printf ("%02x ", xm_header.patter_order_table[i]); // */
+    }
+  printf ("\n");
 }
 
 typedef struct __attribute__ ((__packed__)) XM_PATTERN_HEADER
@@ -69,7 +75,6 @@ typedef struct XM_PATTERN
   uint16_t n_channels;
   XM_pattern_note **data;
 } XM_pattern;
-
 
 /* PatternNote ranges in 1..96 */
 /*   1   = C-0 */
@@ -256,5 +261,19 @@ print_sample_header (XM_sample_header header)
   printf ("panning: %02X\n", header.panning);
   printf ("name: %.22s\n", header.name);
 }
+
+typedef struct XM_INSTRUMENT
+{
+  XM_instrument_header header;
+  XM_extended_instrument_header extended_header;
+  XM_sample *samples;
+} XM_instrument;
+
+typedef struct XM_SONG
+{
+  XM_song_header header;
+  XM_pattern * patterns;
+  XM_instrument * instruments;
+} XM_song;
 
 #endif // XM_H_

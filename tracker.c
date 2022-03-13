@@ -28,25 +28,19 @@ main (int argc, char *argv[])
   fread (xm_contents, 1, size_bytes, xm_file);
   uint8_t *pointer = xm_contents;
 
-  XM_header xm_header = *(XM_header *) pointer;
-  pointer += sizeof (XM_header);
-  print_XM_header (xm_header);
+  XM_song song = { 0 };
+  song.header = *(XM_song_header *) pointer;
+  pointer += sizeof (XM_song_header);
 
-  for (int i = 0; i < xm_header.song_length; i++)
+  song.patterns
+      = (XM_pattern *) malloc (song.header.n_patterns * sizeof (XM_pattern));
+  memset (song.patterns, 0, song.header.n_patterns * sizeof (XM_pattern));
+
+  for (int pat_idx = 0; pat_idx < song.header.n_patterns; pat_idx++)
     {
-      printf ("%02x %02x\n", i, xm_header.patter_order_table[i]); //
-      /* printf ("%02x ", xm_header.patter_order_table[i]); // */
-    }
-  printf ("\n");
-  XM_pattern *patterns = malloc (xm_header.n_patterns * sizeof (XM_pattern));
-  memset (patterns, 0, xm_header.n_patterns * sizeof (XM_pattern));
-
-  for (int pattern_idx = 0; pattern_idx < xm_header.n_patterns; pattern_idx++)
-    {
-
-      XM_pattern *pattern = &patterns[pattern_idx];
+      XM_pattern *pattern = &song.patterns[pat_idx];
       pattern->header = *(XM_pattern_header *) pointer;
-      pattern->n_channels = xm_header.n_channels;
+      pattern->n_channels = song.header.n_channels;
       pointer += sizeof (XM_pattern_header);
 
       uint64_t pattern_size = pattern->header.n_rows * pattern->n_channels;
@@ -63,93 +57,104 @@ main (int argc, char *argv[])
       for (int j = 0; j < pattern->header.n_rows; j++)
         for (int i = 0; i < pattern->n_channels; i++)
           {
-            XM_pattern_note *cur_note = &pattern->data[i][j];
+            XM_pattern_note *note = &pattern->data[i][j];
 
             uint8_t byte = *pointer;
             pointer++;
             if (byte & 0x80)
               {
-                cur_note->note = byte & 0X01 ? *pointer++ : 0;
-                cur_note->instrument = byte & 0X02 ? *pointer++ : 0;
-                cur_note->volume = byte & 0X04 ? *pointer++ : 0;
-                cur_note->effect = byte & 0X08 ? *pointer++ : 0;
-                cur_note->effect_parameter = byte & 0X10 ? *pointer++ : 0;
+                note->note = byte & 0X01 ? *pointer++ : 0;
+                note->instrument = byte & 0X02 ? *pointer++ : 0;
+                note->volume = byte & 0X04 ? *pointer++ : 0;
+                note->effect = byte & 0X08 ? *pointer++ : 0;
+                note->effect_parameter = byte & 0X10 ? *pointer++ : 0;
               }
             else
               {
-                cur_note->note = byte;
-                cur_note->instrument = *pointer++;
-                cur_note->volume = *pointer++;
-                cur_note->effect = *pointer++;
-                cur_note->effect_parameter = *pointer++;
+                note->note = byte;
+                note->instrument = *pointer++;
+                note->volume = *pointer++;
+                note->effect = *pointer++;
+                note->effect_parameter = *pointer++;
               }
           }
-      /* printf ("Pattern %02X\n", pattern_idx); */
-      /* print_pattern_header (*pattern); */
-      /* print_pattern_data (*pattern); */
-      /* printf ("\n"); */
     }
 
-  XM_instrument_header instrument_header = *(XM_instrument_header *) pointer;
-  pointer += sizeof (XM_instrument_header);
-  print_instrument_header (instrument_header);
-
-  if (instrument_header.n_samples)
+  if (song.header.n_instruments)
     {
-      XM_extended_instrument_header extended_instrument_header
-          = *(XM_extended_instrument_header *) pointer;
-      pointer += sizeof (XM_extended_instrument_header);
-      print_extendend_instrument_header (extended_instrument_header);
+      song.instruments = (XM_instrument *) malloc (song.header.n_instruments
+                                                   * sizeof (XM_instrument));
+      memset (song.instruments, 0,
+              song.header.n_instruments * sizeof (XM_instrument));
 
-      XM_sample *sample
-          = malloc (instrument_header.n_samples * sizeof (XM_sample));
-
-      for (int i = 0; i < instrument_header.n_samples; i++)
+      for (int inst_idx = 0; inst_idx < song.header.n_instruments; inst_idx++)
         {
-          sample[i].header = *(XM_sample_header *) pointer;
-          pointer += sizeof (XM_sample_header);
-          print_sample_header (sample[i].header);
-        }
+          XM_instrument *instrument = &song.instruments[inst_idx];
 
-      for (int i = 0; i < instrument_header.n_samples; i++)
-        {
-          XM_sample *cur_sample = &sample[i];
-          if ((cur_sample->header.type & 0X10)) /* if 16bit */
+          instrument->header = *(XM_instrument_header *) pointer;
+          pointer += sizeof (XM_instrument_header);
+
+          if (instrument->header.n_samples)
             {
-              cur_sample->n_samples = cur_sample->header.length / 2;
-              cur_sample->data = (int32_t *) malloc (cur_sample->n_samples
-                                                     * sizeof (int32_t));
-              memset (cur_sample->data, 0,
-                      cur_sample->n_samples * sizeof (int32_t));
+              instrument->extended_header
+                  = *(XM_extended_instrument_header *) pointer;
+              pointer += sizeof (XM_extended_instrument_header);
 
-              int16_t old = 0;
-              for (int i = 0; i < cur_sample->n_samples; i++)
+              instrument->samples = (XM_sample *) malloc (
+                  instrument->header.n_samples * sizeof (XM_sample));
+
+              for (int sample_idx = 0;
+                   sample_idx < instrument->header.n_samples; sample_idx++)
                 {
-                  old += *((int16_t *) pointer);
-                  cur_sample->data[i] = old;
-                  pointer += 2;
+                  XM_sample *sample = &instrument->samples[sample_idx];
+
+                  sample->header = *(XM_sample_header *) pointer;
+                  pointer += sizeof (XM_sample_header);
                 }
-            }
-          else
-            {
-              cur_sample->n_samples = cur_sample->header.length;
-              cur_sample->data = (int32_t *) malloc (cur_sample->n_samples
-                                                     * sizeof (int32_t));
-              memset (cur_sample->data, 0,
-                      cur_sample->n_samples * sizeof (int32_t));
 
-              int8_t old = 0;
-              for (int i = 0; i < cur_sample->n_samples; i++)
+              for (int sample_idx = 0;
+                   sample_idx < instrument->header.n_samples; sample_idx++)
                 {
-                  old += *((int8_t *) pointer);
-                  cur_sample->data[i] = old;
-                  pointer += 1;
+                  XM_sample *sample = &instrument->samples[sample_idx];
+                  if ((sample->header.type & 0X10)) /* if 16bit */
+                    {
+                      sample->n_samples = sample->header.length / 2;
+                      sample->data = (int32_t *) malloc (sample->n_samples
+                                                         * sizeof (int32_t));
+                      memset (sample->data, 0,
+                              sample->n_samples * sizeof (int32_t));
+
+                      int16_t old = 0;
+                      for (int i = 0; i < sample->n_samples; i++)
+                        {
+                          old += *((int16_t *) pointer);
+                          sample->data[i] = old;
+                          pointer += 2;
+                        }
+                    }
+                  else
+                    {
+                      sample->n_samples = sample->header.length;
+                      sample->data = (int32_t *) malloc (sample->n_samples
+                                                         * sizeof (int32_t));
+                      memset (sample->data, 0,
+                              sample->n_samples * sizeof (int32_t));
+
+                      int8_t old = 0;
+                      for (int sample_sample = 0;
+                           sample_sample < sample->n_samples; sample_sample++)
+                        {
+                          old += *((int8_t *) pointer);
+                          sample->data[sample_sample] = old;
+                          pointer += 1;
+                        }
+                    }
                 }
             }
         }
     }
-
-  printf ("%02X\n", (uint16_t) (pointer - xm_contents));
+  if ((pointer - xm_contents) == size_bytes)
+    printf ("All contents in file were parsed!\n");
 
   SDL_InitSubSystem (SDL_INIT_AUDIO);
   SDL_AudioSpec wanted, obtained;
