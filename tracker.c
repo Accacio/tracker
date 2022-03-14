@@ -4,6 +4,10 @@
 #include "xm.h"
 #include "beeper.h"
 
+#define CHOP(pointer, TYPE)                                                   \
+  *(TYPE *) pointer;                                                          \
+  pointer += sizeof (TYPE)
+
 int
 main (int argc, char *argv[])
 {
@@ -29,8 +33,7 @@ main (int argc, char *argv[])
   uint8_t *pointer = xm_contents;
 
   XM_song song = { 0 };
-  song.header = *(XM_song_header *) pointer;
-  pointer += sizeof (XM_song_header);
+  song.header = CHOP (pointer, XM_song_header);
 
   song.patterns
       = (XM_pattern *) malloc (song.header.n_patterns * sizeof (XM_pattern));
@@ -39,9 +42,8 @@ main (int argc, char *argv[])
   for (int pat_idx = 0; pat_idx < song.header.n_patterns; pat_idx++)
     {
       XM_pattern *pattern = &song.patterns[pat_idx];
-      pattern->header = *(XM_pattern_header *) pointer;
+      pattern->header = CHOP (pointer, XM_pattern_header);
       pattern->n_channels = song.header.n_channels;
-      pointer += sizeof (XM_pattern_header);
 
       uint64_t pattern_size = pattern->header.n_rows * pattern->n_channels;
       pattern->data = (XM_pattern_note **) malloc (
@@ -59,8 +61,8 @@ main (int argc, char *argv[])
           {
             XM_pattern_note *note = &pattern->data[i][j];
 
-            uint8_t byte = *pointer;
-            pointer++;
+            uint8_t byte = CHOP (pointer, uint8_t);
+
             if (byte & 0x80)
               {
                 note->note = byte & 0X01 ? *pointer++ : 0;
@@ -91,14 +93,12 @@ main (int argc, char *argv[])
         {
           XM_instrument *instrument = &song.instruments[inst_idx];
 
-          instrument->header = *(XM_instrument_header *) pointer;
-          pointer += sizeof (XM_instrument_header);
+          instrument->header = CHOP (pointer, XM_instrument_header);
 
           if (instrument->header.n_samples)
             {
               instrument->extended_header
-                  = *(XM_extended_instrument_header *) pointer;
-              pointer += sizeof (XM_extended_instrument_header);
+                  = CHOP (pointer, XM_extended_instrument_header);
 
               instrument->samples = (XM_sample *) malloc (
                   instrument->header.n_samples * sizeof (XM_sample));
@@ -108,8 +108,7 @@ main (int argc, char *argv[])
                 {
                   XM_sample *sample = &instrument->samples[sample_idx];
 
-                  sample->header = *(XM_sample_header *) pointer;
-                  pointer += sizeof (XM_sample_header);
+                  sample->header = CHOP (pointer, XM_sample_header);
                 }
 
               for (int sample_idx = 0;
@@ -127,9 +126,8 @@ main (int argc, char *argv[])
                       int16_t old = 0;
                       for (int i = 0; i < sample->n_samples; i++)
                         {
-                          old += *((int16_t *) pointer);
+                          old += CHOP (pointer, int16_t);
                           sample->data[i] = old;
-                          pointer += 2;
                         }
                     }
                   else
@@ -144,9 +142,8 @@ main (int argc, char *argv[])
                       for (int sample_sample = 0;
                            sample_sample < sample->n_samples; sample_sample++)
                         {
-                          old += *((int8_t *) pointer);
+                          old += CHOP (pointer, int8_t);
                           sample->data[sample_sample] = old;
-                          pointer += 1;
                         }
                     }
                 }
