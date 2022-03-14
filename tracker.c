@@ -30,6 +30,8 @@ main (int argc, char *argv[])
   rewind (xm_file);
   uint8_t *xm_contents = (uint8_t *) malloc (size_bytes);
   fread (xm_contents, 1, size_bytes, xm_file);
+  fclose(xm_file);
+
   uint8_t *pointer = xm_contents;
 
   XM_song song = { 0 };
