@@ -27,31 +27,6 @@ typedef struct __attribute__ ((__packed__)) XM_SONG_HEADER
   uint8_t patter_order_table[256];
 } XM_song_header;
 
-void
-print_song_header (XM_song_header header)
-{
-  printf ("id: %.17s\n", header.id); // %Extended Module: %
-  printf ("name: %.20s\n", header.module_name);
-  printf ("tracker: %.20s\n", header.tracker_name);
-  printf ("version: %04x\n", header.version);       // current is 104
-  printf ("header size: %d\n", header.header_size); //
-  printf ("length: %02x\n", header.song_length);    //
-  printf ("restart position: %02x\n",
-          header.song_restart_position);                //
-  printf ("channels: %02x\n", header.n_channels);       //
-  printf ("patterns: %02x\n", header.n_patterns);       //
-  printf ("instruments: %02x\n", header.n_instruments); //
-  printf ("flags: %02x\n", header.flags);               //
-  printf ("tempo: %d\n", header.default_tempo);         //
-  printf ("bpm: %d\n", header.bpm);                     //
-  for (int i = 0; i < header.song_length; i++)
-    {
-      printf ("%02x %02x\n", i, header.patter_order_table[i]); //
-      /* printf ("%02x ", xm_header.patter_order_table[i]); // */
-    }
-  printf ("\n");
-}
-
 typedef struct __attribute__ ((__packed__)) XM_PATTERN_HEADER
 {
   uint32_t size;
@@ -299,7 +274,7 @@ print_instrument (XM_instrument instrument)
   for (int sample_idx = 0; sample_idx < instrument.header.n_samples;
        sample_idx++)
     {
-      printf("=== Sample %02X ===\n",sample_idx);
+      printf ("=== Sample %02X ===\n", sample_idx);
       XM_sample sample = instrument.samples[sample_idx];
       print_sample_header (sample);
     }
@@ -311,6 +286,31 @@ typedef struct XM_SONG
   XM_pattern *patterns;
   XM_instrument *instruments;
 } XM_song;
+
+void
+print_song_header (XM_song song)
+{
+  printf ("id: %.17s\n", song.header.id); // %Extended Module: %
+  printf ("name: %.20s\n", song.header.module_name);
+  printf ("tracker: %.20s\n", song.header.tracker_name);
+  printf ("version: %04x\n", song.header.version);       // current is 104
+  printf ("header size: %d\n", song.header.header_size); //
+  printf ("length: %02x\n", song.header.song_length);    //
+  printf ("restart position: %02x\n",
+          song.header.song_restart_position);                //
+  printf ("channels: %02x\n", song.header.n_channels);       //
+  printf ("patterns: %02x\n", song.header.n_patterns);       //
+  printf ("instruments: %02x\n", song.header.n_instruments); //
+  printf ("flags: %02x\n", song.header.flags);               //
+  printf ("tempo: %d\n", song.header.default_tempo);         //
+  printf ("bpm: %d\n", song.header.bpm);                     //
+  for (int i = 0; i < song.header.song_length; i++)
+    {
+      printf ("%02x %02x\n", i, song.header.patter_order_table[i]); //
+      /* printf ("%02x ", xm_header.patter_order_table[i]); // */
+    }
+  printf ("\n");
+}
 
 uint8_t
 read_song_from_file (const char *filename, XM_song *song)
@@ -460,7 +460,7 @@ void
 print_song (XM_song song)
 {
   printf ("=== SONG ===\n");
-  print_song_header (song.header);
+  print_song_header (song);
   printf ("\n");
   for (int pat_idx = 0; pat_idx < song.header.n_patterns; pat_idx++)
     {

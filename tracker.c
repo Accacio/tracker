@@ -4,7 +4,6 @@
 #include "xm.h"
 #include "beeper.h"
 
-
 int
 main (int argc, char *argv[])
 {
@@ -14,9 +13,16 @@ main (int argc, char *argv[])
       return (1);
     }
   const char *filename = argv[1];
-  XM_song song = {0};
+  const char *output_filename = "output.xm";
+  XM_song song = { 0 };
 
-  read_song_from_file(filename,&song);
+  read_song_from_file (filename, &song);
+  print_song(song);
+  /* print_song_header (song); */
+
+  FILE *xm_file = fopen (output_filename, "wb");
+  fwrite(&song.header, sizeof(XM_song_header), 1, xm_file);
+  fclose (xm_file);
 
   SDL_InitSubSystem (SDL_INIT_AUDIO);
   SDL_AudioSpec wanted, obtained;
