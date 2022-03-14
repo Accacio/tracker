@@ -17,11 +17,81 @@ main (int argc, char *argv[])
   XM_song song = { 0 };
 
   read_song_from_file (filename, &song);
-  print_song(song);
+  /* print_song (song); */
   /* print_song_header (song); */
 
   FILE *xm_file = fopen (output_filename, "wb");
-  fwrite(&song.header, sizeof(XM_song_header), 1, xm_file);
+  fwrite (&song.header, sizeof (XM_song_header), 1, xm_file);
+
+  for (int pat_idx = 0; pat_idx < song.header.n_patterns; pat_idx++)
+    {
+      XM_pattern *pattern = &song.patterns[pat_idx];
+      fwrite (&pattern->header.size, sizeof (uint32_t), 1, xm_file);
+      fwrite (&pattern->header.packing_type, sizeof (uint8_t), 1, xm_file);
+      fwrite (&pattern->header.n_rows, sizeof (uint16_t), 1, xm_file);
+      /* TODO(accacio): compress pattern data */
+      uint16_t total_size = 5 * pattern->header.n_rows * pattern->n_channels;
+      fwrite (&total_size, sizeof (uint16_t), 1, xm_file);
+      /* fwrite(&pattern->header.length,sizeof(uint16_t),1,xm_file); */
+      /* fwrite (&pattern->header, sizeof (XM_pattern_header), 1, xm_file); */
+
+      for (int j = 0; j < pattern->header.n_rows; j++)
+        for (int i = 0; i < pattern->n_channels; i++)
+          {
+            XM_pattern_note *note = &pattern->data[i][j];
+
+            fwrite (note, sizeof (XM_pattern_note), 1, xm_file);
+          }
+    }
+  for (int inst_idx = 0; inst_idx < song.header.n_instruments; inst_idx++)
+    {
+      XM_instrument *instrument = &song.instruments[inst_idx];
+
+      fwrite (&instrument->header, sizeof (XM_instrument_header), 1, xm_file);
+
+      if (instrument->header.n_samples)
+        {
+          fwrite (&instrument->extended_header,
+                  sizeof (XM_extended_instrument_header), 1, xm_file);
+
+          for (int sample_idx = 0; sample_idx < instrument->header.n_samples;
+               sample_idx++)
+            {
+              XM_sample *sample = &instrument->samples[sample_idx];
+
+              fwrite (&sample->header, sizeof (XM_sample_header), 1, xm_file);
+            }
+
+          for (int sample_idx = 0; sample_idx < instrument->header.n_samples;
+               sample_idx++)
+            {
+              XM_sample *sample = &instrument->samples[sample_idx];
+
+              if ((sample->header.type & 0X10)) /* if 16bit */
+                {
+
+                  int16_t old = sample->data[0];
+                  fwrite (&old, sizeof (int16_t), 1, xm_file);
+                  for (int i = 1; i < sample->n_samples; i++)
+                    {
+                      old = sample->data[i] - sample->data[i - 1];
+                      fwrite (&old, sizeof (int16_t), 1, xm_file);
+                    }
+                }
+              else
+                {
+
+                  int8_t old = sample->data[0];
+                  fwrite (&old, sizeof (int8_t), 1, xm_file);
+                  for (int i = 0; i < sample->n_samples; i++)
+                    {
+                      old = sample->data[i] - sample->data[i - 1];
+                      fwrite (&old, sizeof (int8_t), 1, xm_file);
+                    }
+                }
+            }
+        }
+    }
   fclose (xm_file);
 
   SDL_InitSubSystem (SDL_INIT_AUDIO);
