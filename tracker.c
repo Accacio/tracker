@@ -19,28 +19,59 @@ main (int argc, char *argv[])
   read_song_from_file (filename, &song);
   /* print_song (song); */
   /* print_song_header (song); */
-
+  /* return 0; */
   FILE *xm_file = fopen (output_filename, "wb");
   fwrite (&song.header, sizeof (XM_song_header), 1, xm_file);
-
   for (int pat_idx = 0; pat_idx < song.header.n_patterns; pat_idx++)
     {
       XM_pattern *pattern = &song.patterns[pat_idx];
       fwrite (&pattern->header.size, sizeof (uint32_t), 1, xm_file);
       fwrite (&pattern->header.packing_type, sizeof (uint8_t), 1, xm_file);
       fwrite (&pattern->header.n_rows, sizeof (uint16_t), 1, xm_file);
-      /* TODO(accacio): compress pattern data */
-      uint16_t total_size = 5 * pattern->header.n_rows * pattern->n_channels;
-      fwrite (&total_size, sizeof (uint16_t), 1, xm_file);
-      /* fwrite(&pattern->header.length,sizeof(uint16_t),1,xm_file); */
+
+      /* TODO(accacio): precalculate compressed pattern data size */
+      /* uint16_t total_size = 5 * pattern->header.n_rows *
+       * pattern->n_channels; */
+      /* fwrite (&total_size, sizeof (uint16_t), 1, xm_file); */
+      fwrite (&pattern->header.length, sizeof (uint16_t), 1, xm_file);
       /* fwrite (&pattern->header, sizeof (XM_pattern_header), 1, xm_file); */
 
       for (int j = 0; j < pattern->header.n_rows; j++)
         for (int i = 0; i < pattern->n_channels; i++)
           {
-            XM_pattern_note *note = &pattern->data[i][j];
+            XM_pattern_note note = pattern->data[i][j];
 
-            fwrite (note, sizeof (XM_pattern_note), 1, xm_file);
+            if (note.note && note.effect && note.instrument && note.effect
+                && note.effect_parameter)
+              {
+                printf ("No compression\n");
+                /* TODO(accacio): should write to temp buffer */
+                fwrite (&note, sizeof (XM_pattern_note), 1, xm_file);
+              }
+            else
+              {
+                uint8_t mask = 0x80;
+                mask |= note.note ? 0x01 : 0;
+                mask |= note.instrument ? 0x02 : 0;
+                mask |= note.volume ? 0x04 : 0;
+                mask |= note.effect ? 0x08 : 0;
+                mask |= note.effect_parameter ? 0x10 : 0;
+
+                /* TODO(accacio): should write to temp buffer */
+                fwrite (&mask, sizeof (uint8_t), 1, xm_file);
+
+                if (mask & 0x01)
+                  fwrite (&note.note, sizeof (uint8_t), 1, xm_file);
+                if (mask & 0x02)
+                  fwrite (&note.instrument, sizeof (uint8_t), 1, xm_file);
+                if (mask & 0x04)
+                  fwrite (&note.volume, sizeof (uint8_t), 1, xm_file);
+                if (mask & 0x08)
+                  fwrite (&note.effect, sizeof (uint8_t), 1, xm_file);
+                if (mask & 0x10)
+                  fwrite (&note.effect_parameter, sizeof (uint8_t), 1,
+                          xm_file);
+              }
           }
     }
   for (int inst_idx = 0; inst_idx < song.header.n_instruments; inst_idx++)
