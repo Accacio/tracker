@@ -127,7 +127,7 @@ main (int argc, char *argv[])
 
                   int8_t old = sample->data[0];
                   fwrite (&old, sizeof (int8_t), 1, xm_file);
-                  for (int i = 0; i < sample->n_samples; i++)
+                  for (int i = 1; i < sample->n_samples; i++)
                     {
                       old = sample->data[i] - sample->data[i - 1];
                       fwrite (&old, sizeof (int8_t), 1, xm_file);
