@@ -447,6 +447,11 @@ read_song_from_file (const char *filename, XM_song *song)
                     }
                 }
             }
+          else
+            {
+              pointer
+                  += instrument->header.size - sizeof (XM_instrument_header);
+            }
         }
     }
   free (xm_contents);
