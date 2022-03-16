@@ -135,6 +135,11 @@ main (int argc, char *argv[])
                 }
             }
         }
+      else
+        {
+          int32_t sample_header_size = sizeof (XM_sample_header);
+          fwrite (&sample_header_size, sizeof (int32_t), 1, xm_file);
+        }
     }
   fclose (xm_file);
 
