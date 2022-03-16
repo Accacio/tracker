@@ -471,7 +471,7 @@ print_song (XM_song song)
     {
       printf ("=== Pattern %02X ===\n", pat_idx);
       XM_pattern pattern = song.patterns[pat_idx];
-      print_pattern(pattern);
+      print_pattern (pattern);
     }
   for (int inst_idx = 0; inst_idx < song.header.n_instruments; inst_idx++)
     {
