@@ -33,54 +33,67 @@ main (int argc, char *argv[])
       /* uint16_t total_size = 5 * pattern->header.n_rows *
        * pattern->n_channels; */
       /* fwrite (&total_size, sizeof (uint16_t), 1, xm_file); */
-      fwrite (&pattern->header.length, sizeof (uint16_t), 1, xm_file);
-      /* fwrite (&pattern->header, sizeof (XM_pattern_header), 1, xm_file); */
+      uint8_t *compact_pattern = (uint8_t *) malloc (5 * pattern->n_channels
+                                                     * pattern->header.n_rows);
+      uint8_t *pointer = compact_pattern;
 
       for (int j = 0; j < pattern->header.n_rows; j++)
         for (int i = 0; i < pattern->n_channels; i++)
           {
             XM_pattern_note note = pattern->data[i][j];
 
-            if (note.note && note.effect && note.instrument && note.effect
-                && note.effect_parameter)
+            uint8_t mask = 0x80;
+            mask |= note.note ? 0x01 : 0;
+            mask |= note.instrument ? 0x02 : 0;
+            mask |= note.volume ? 0x04 : 0;
+            mask |= note.effect ? 0x08 : 0;
+            mask |= note.effect_parameter ? 0x10 : 0;
+
+            if (mask == 0x9F || mask == 0x8F)
               {
-                printf ("No compression\n");
-                /* TODO(accacio): should write to temp buffer */
-                fwrite (&note, sizeof (XM_pattern_note), 1, xm_file);
+                *pointer++ = note.note;
+                *pointer++ = note.instrument;
+                *pointer++ = note.volume;
+                *pointer++ = note.effect;
+                *pointer++ = note.effect_parameter;
               }
             else
               {
-                uint8_t mask = 0x80;
-                mask |= note.note ? 0x01 : 0;
-                mask |= note.instrument ? 0x02 : 0;
-                mask |= note.volume ? 0x04 : 0;
-                mask |= note.effect ? 0x08 : 0;
-                mask |= note.effect_parameter ? 0x10 : 0;
 
-                /* TODO(accacio): should write to temp buffer */
-                fwrite (&mask, sizeof (uint8_t), 1, xm_file);
+                *pointer++ = mask;
 
                 if (mask & 0x01)
-                  fwrite (&note.note, sizeof (uint8_t), 1, xm_file);
+                  *pointer++ = note.note;
                 if (mask & 0x02)
-                  fwrite (&note.instrument, sizeof (uint8_t), 1, xm_file);
+                  *pointer++ = note.instrument;
                 if (mask & 0x04)
-                  fwrite (&note.volume, sizeof (uint8_t), 1, xm_file);
+                  *pointer++ = note.volume;
                 if (mask & 0x08)
-                  fwrite (&note.effect, sizeof (uint8_t), 1, xm_file);
+                  *pointer++ = note.effect;
                 if (mask & 0x10)
-                  fwrite (&note.effect_parameter, sizeof (uint8_t), 1,
-                          xm_file);
+                  *pointer++ = note.effect_parameter;
               }
           }
+      pattern->header.length = (uint16_t) (pointer - compact_pattern);
+      fwrite (&pattern->header.length, sizeof (uint16_t), 1, xm_file);
+
+      fwrite (compact_pattern, pattern->header.length, 1, xm_file);
+      free (compact_pattern);
     }
   for (int inst_idx = 0; inst_idx < song.header.n_instruments; inst_idx++)
     {
       XM_instrument *instrument = &song.instruments[inst_idx];
 
-      fwrite (&instrument->header, sizeof (XM_instrument_header), 1, xm_file);
+      /* fwrite (&instrument->header, sizeof (XM_instrument_header), 1,
+       * xm_file); */
+      fwrite (&instrument->header.size, sizeof (uint32_t), 1, xm_file);
+      fwrite (&instrument->header.name, 22 * sizeof (uint8_t), 1, xm_file);
+      fwrite (&instrument->header.type, sizeof (uint8_t), 1, xm_file);
+      fwrite (&instrument->header.n_samples, sizeof (uint16_t), 1, xm_file);
 
-      if (instrument->header.n_samples)
+      printf ("=== Instrument %02X ===\n", inst_idx);
+      print_instrument_header (*instrument);
+      if (instrument->header.n_samples > 0)
         {
           fwrite (&instrument->extended_header,
                   sizeof (XM_extended_instrument_header), 1, xm_file);
